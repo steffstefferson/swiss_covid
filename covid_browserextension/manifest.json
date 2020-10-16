@@ -1,0 +1,28 @@
+{
+  "name": "SwissCovid Data",
+  "version": "1.0.5",
+  "description": "SwissCovid Data, parsed and purified from source https://www.bag.admin.ch",
+  "permissions": ["storage"],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "options_page": "options.html",
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "show covid cases",
+    "default_icon": {
+      "16": "images/icons16.png",
+      "32": "images/icons32.png",
+      "48": "images/icons48.png",
+      "128": "images/icons128.png"
+    }
+  },
+  "icons": {
+    "16": "images/icons16.png",
+    "32": "images/icons32.png",
+    "48": "images/icons48.png",
+    "128": "images/icons128.png"
+  },
+  "manifest_version": 2
+}

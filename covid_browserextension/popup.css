@@ -1,0 +1,74 @@
+body {
+  font-size: 14px;
+  width: 250px;
+  padding: 10px;
+  margin: auto;
+  font-family: Arial;
+}
+
+.dayDiffrence {
+  background-color: #f5c6c6;
+  border: solid 1px red;
+  margin: 10px 0px;
+  width: 100%;
+  padding: 4px;
+  visibility: hidden;
+}
+
+h1,
+h2 {
+  text-align: center;
+}
+
+ul {
+  padding: 0px;
+}
+li {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: self-end;
+  border-bottom: 1px solid black;
+}
+li:hover {
+  background-color: whitesmoke;
+}
+
+li:first-child {
+  border-top: 1px solid black;
+}
+
+li div:first-child {
+  text-align: left;
+  width: 60px;
+}
+
+.sortBy {
+  text-align: right;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+li div {
+  width: 100%;
+  padding: 0px 26px;
+  text-align: right;
+}
+
+.favoriteState {
+  background-color: #8080801c;
+}
+.state {
+  font-size: 18px;
+  padding: 5px 0px;
+}
+
+a {
+  color: black;
+}
+
+button {
+  padding: 3px;
+  margin: 11px 0px;
+  outline: none;
+}

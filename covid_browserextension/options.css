@@ -1,0 +1,28 @@
+body {
+  font-size: 14px;
+  width: 450px;
+  padding: 10px;
+  margin: auto;
+  font-family: Arial;
+}
+
+.settingsContainer {
+  width: fit-content;
+}
+
+h1 {
+  text-align: center;
+}
+
+select {
+  width: 200px;
+}
+
+.saveOk {
+  background-color: #bcefbc;
+  border: solid 1px green;
+  margin: 10px 0px;
+  width: 100%;
+  padding: 4px;
+  visibility: hidden;
+}

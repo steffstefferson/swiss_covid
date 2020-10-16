@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="popup.css" />
+  </head>
+  <body>
+    <h1 id="title"></h1>
+    <h2><span id="date"></span></h2>
+    <h2>New cases: <span id="totalNewCases">??</span></h2>
+    <div id="dayDiffrence" class="dayDiffrence"></div>
+    <div id="data"></div>
+    <div>
+      Source:
+      <a target="_blank"
+        href="https://www.bag.admin.ch/dam/bag/de/dokumente/mt/k-und-i/aktuelle-ausbrueche-pandemien/2019-nCoV/covid-19-datengrundlage-lagebericht.xlsx.download.xlsx/200325_Datengrundlage_Grafiken_COVID-19-Bericht.xlsx"
+        >https://www.bag.admin.ch</a
+      >
+    </div>
+    <div>
+      More Data:
+      <a href="https://rsalzer.github.io/COVID_19_CH/" target="_blank"
+        >https://rsalzer.github.io</a
+      >
+    </div>
+
+    <button id="refreshData">Refresh Data</button>
+  </body>
+  <script src="popup.js"></script>
+</html>
