@@ -8,15 +8,20 @@ function init(){
   document.getElementById("refreshData").addEventListener("click", hardRefresh);
   refresh();
   callEventPageMethod("popupOpened", null,() => {});
+  chrome.runtime.onMessage.addListener(messageCallback);
 }
 
-
-
-function hardRefresh() {
-  chrome.storage.local.set({ countryData: null }, function () {
-    console.log("countryData is reseted");
-    getNewContentFromBackground();
-  });
+function messageCallback(obj, sender, sendResponse) {
+  if (obj) {
+      console.log("got "+obj.method+" from background.js");
+      if (obj.method == "newDataLoadedInBackground") {
+        chrome.storage.local.set({ countryData: obj.data }, function () {
+          refresh();
+        });
+      sendResponse(null);
+    }
+  }
+  return true;
 }
 
 function getNewContentFromBackground() {
@@ -32,6 +37,13 @@ function callEventPageMethod(method, data, callback) {
     response
   ) {
     if (typeof callback === "function") callback(response);
+  });
+}
+
+function hardRefresh() {
+  chrome.storage.local.set({ countryData: null }, function () {
+    console.log("countryData is reseted");
+    getNewContentFromBackground();
   });
 }
 
@@ -57,7 +69,7 @@ function display(covidData, favoriteState) {
     headerDate.title = "Generation date: " + covidData.generationDate;
 
     if (covidData.dayDiffrence > 1) {
-      document.getElementById("dayDiffrence").style.visibility = 'block';
+      document.getElementById("dayDiffrence").style.visibility = 'visible';
       document.getElementById("dayDiffrence").innerText =
         "Day diffrence since last report: " + covidData.dayDiffrence + ' days';
     }else{

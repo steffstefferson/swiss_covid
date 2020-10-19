@@ -63,10 +63,10 @@ exports.getData = functions.https.onRequest(async (request, response) => {
 
   let data = await getDataOfDate(date);
 
-  // if(data.date === lastFetchDate){
-  //   response.status(304).send("");
-  //   return;
-  // }
+  if(data && data.date === lastFetchDate){
+    response.status(304).send("");
+    return;
+  }
 
   if (data) {
     functions.logger.info(

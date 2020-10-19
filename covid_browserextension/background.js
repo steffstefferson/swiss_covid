@@ -1,28 +1,47 @@
 console.log("covid background.js");
 
-// var baseUrl = "http://localhost:5001/swiss-covid/us-central1/getData?date=";
-var baseUrl =
+// let baseUrl = "http://localhost:5001/swiss-covid/us-central1/getData?date=";
+let baseUrl =
   "https://us-central1-swiss-covid.cloudfunctions.net/getData?date=";
-var checkForNewDataInMin = 120;
-
 
 function init(){
   setIcon(false);
-  checkAndUpdateData();
   chrome.runtime.onMessage.addListener(messageCallback);
-  setInterval(function(){
-      console.log("setInterval: check for new data");
-      checkAndUpdateData();
-  },checkForNewDataInMin * 60 * 1000);
+  periodicallyCheckForNewData();
 };
+
+function periodicallyCheckForNewData(){
+  checkAndUpdateData().then((data) => {
+    let checkForNewDataInMin = getMinutesToNextCheck();
+    console.log("periodicallyCheckForNewData: next check in "+checkForNewDataInMin+" minutes.");
+    setTimeout(periodicallyCheckForNewData,checkForNewDataInMin * 60 * 1000);
+    if(data.newDataLoaded){
+      //notfiy popup
+      chrome.runtime.sendMessage({ method: 'newDataLoadedInBackground', data: data.data },null);
+    }
+  });
+}
+
+function getMinutesToNextCheck(){
+  //BAG data are release week-daily between 12.00 and 13.30 Uhr, during this period we check every 5 min.
+  let afterTwelve = 12 * 60;
+  let beforeOne = 13 * 60 + 30;
+  let today = new Date();
+  let currentDayTimeInMinutes = today.getHours()*60 + today.getMinutes();
+  let isSaturdayOrSunday = today.getDay() == 6 || today.getDay() == 0; //käh luscht
+  if(afterTwelve < currentDayTimeInMinutes && currentDayTimeInMinutes < beforeOne && !isSaturdayOrSunday){
+    return 5;
+  }else{
+    return 60 * 4; //4 hours
+  }
+}
 
 function messageCallback(obj, sender, sendResponse) {
   if (obj) {
       console.log("got "+obj.method+" from popup.js");
       if (obj.method == "refreshData") {
       checkAndUpdateData().then(function (data) {
-        setIcon(false);
-        sendResponse(data);
+        sendResponse(data.data);
       });
     }
     else if (obj.method == "popupOpened") {
@@ -35,17 +54,13 @@ function messageCallback(obj, sender, sendResponse) {
 
 function checkAndUpdateData() {
   return checkAndFetchData().then((fetchedData) => {
-    var {newDataLoaded, data} = fetchedData;
-    console.log("background-js countryData:", data);
-  
-    if(newDataLoaded){
-      chrome.storage.local.set({ countryData: data }, function () {
-        console.log("countryData is set to " + data);
+    console.log("background-js countryData:", fetchedData.data);
+    if(fetchedData.newDataLoaded){
+      chrome.storage.local.set({ countryData: fetchedData.data }, function () {
+        console.log("chrome.storage.local countryData is set to " + fetchedData.data);
       });
-    
-      setIcon(newDataLoaded);
     } 
-    return data;
+    return fetchedData;
   });
 }
 function setIcon(newData){
@@ -65,46 +80,28 @@ async function checkAndFetchData() {
         reslove({newDataLoaded: true, data : await fetchLastData('')});
         return;
       }
-      var today = new Date();
-      var lastDataDate = new Date(localData.countryData.date);
-      const diffTime = Math.abs(today - lastDataDate);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays < 0) {
+      let today = new Date().toISOString().substring(0, 10);
+      let lastDataDate = new Date(localData.countryData.date).toISOString().substring(0, 10);
+      if (today === lastDataDate) {
         reslove({newDataLoaded: false, data :localData.countryData});
+        return;
       }
-      if (
-        diffDays > 1 &&
-        !(
-          today.getDay() == 6 ||
-          today.getDay() == 0 ||
-          lastDataDate.getDay() == 5
-        )
-      ) {
-        console.log(
-          "skip fetching data since it is weekend",
-          lastDataDate.toUTCString()
-        );
-        //no new data on weeked
-        reslove({newDataLoaded: false, data :localData.countryData});
-      } else {
-        var newData = await fetchLastData(localData.countryData.date);
-        if(newData == null){
-          var isNewData = newData.date != localData.countryData.date;
-          reslove({newDataLoaded: false ,data: newData});
-        }else{
-          var isNewData = newData.date != localData.countryData.date;
-          reslove({newDataLoaded: isNewData,data: localData.countryData});
-        }
+      let newData = await fetchLastData(localData.countryData.date);
+      if(newData == null){
+        reslove({newDataLoaded: false ,data: localData.countryData});
+      }else{
+        let isNewData = newData.date != localData.countryData.date;
+        reslove({newDataLoaded: isNewData,data: newData});
       }
     });
   });
 }
 
 async function fetchLastData(lastFetchDate) {
-  for (var i = 0; i < 10; i++) {
-    var date = new Date();
+  for (let i = 0; i < 10; i++) {
+    let date = new Date();
     date.setDate(date.getDate() - i);
-    var data = await fetchLastDate(date,lastFetchDate);
+    let data = await fetchLastDate(date,lastFetchDate);
     if (data.date) {
       console.log("got new data for " + date.toUTCString(), data);
       data = resolveCsv(data);
@@ -114,7 +111,7 @@ async function fetchLastData(lastFetchDate) {
 }
 
 async function fetchLastDate(d,lastFetchDate) {
-  var url = baseUrl + d.toISOString().substring(0, 10);
+  let url = baseUrl + d.toISOString().substring(0, 10);
   url += "&lastFetchDate="+lastFetchDate;
   return await fetch(url, {}).then((response) => {
     if(response.status == 304) // not modified
@@ -135,8 +132,8 @@ function resolveCsv(json) {
 }
 
 function resolveItem(item) {
-  var csvArray = item.split(",");
-  var json = {
+  let csvArray = item.split(",");
+  let json = {
     name: csvArray[0],
     cases: +csvArray[1],
     casesDiff: +csvArray[2],
