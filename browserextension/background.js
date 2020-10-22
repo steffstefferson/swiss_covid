@@ -1,4 +1,4 @@
-console.log("covid background.js");
+console.log(new Date()+": covid background.js loaded");
 
 // let baseUrl = "http://localhost:5001/swiss-covid/us-central1/getData?date=";
 let baseUrl =
@@ -13,7 +13,7 @@ function init(){
 function periodicallyCheckForNewData(){
   checkAndUpdateData().then((data) => {
     let checkForNewDataInMin = getMinutesToNextCheck();
-    console.log("periodicallyCheckForNewData: next check in "+checkForNewDataInMin+" minutes.");
+    console.log(new Date()+": periodicallyCheckForNewData: next check in "+checkForNewDataInMin+" minutes.");
     setTimeout(periodicallyCheckForNewData,checkForNewDataInMin * 60 * 1000);
     if(data.newDataLoaded){
       //notfiy popup
@@ -23,22 +23,30 @@ function periodicallyCheckForNewData(){
 }
 
 function getMinutesToNextCheck(){
-  //BAG data are release week-daily between 12.00 and 13.30 Uhr, during this period we check every 5 min.
+  return getMinutesToNextCheckInternal(new Date());
+}
+
+function getMinutesToNextCheckInternal(today){
+  //BAG data are release week-daily between 12.00 and 13.00 Uhr, during this period we check every 5 min.
   let afterTwelve = 12 * 60;
-  let beforeOne = 13 * 60 + 30;
-  let today = new Date();
+  let beforeOne = 13 * 60;
   let currentDayTimeInMinutes = today.getHours()*60 + today.getMinutes();
   let isSaturdayOrSunday = today.getDay() == 6 || today.getDay() == 0; //käh luscht
-  if(afterTwelve < currentDayTimeInMinutes && currentDayTimeInMinutes < beforeOne && !isSaturdayOrSunday){
-    return 5;
-  }else{
-    return 60 * 4; //4 hours
+  var defaultWaitingMin = 60 * 4; //4 hours
+  if(isSaturdayOrSunday){
+    return defaultWaitingMin;
+  }else if(afterTwelve < currentDayTimeInMinutes && currentDayTimeInMinutes < beforeOne){
+      return 5;
+  }else if(afterTwelve > currentDayTimeInMinutes){
+    //its almost twelve, adjust timeout to not miss twelve oclock
+    return Math.min(afterTwelve-currentDayTimeInMinutes,defaultWaitingMin);
   }
+  return defaultWaitingMin;
 }
 
 function messageCallback(obj, sender, sendResponse) {
   if (obj) {
-      console.log("got "+obj.method+" from popup.js");
+      console.log("got "+obj.method+" from popup.js",sender);
       if (obj.method == "refreshData") {
       checkAndUpdateData().then(function (data) {
         sendResponse(data.data);
@@ -57,7 +65,7 @@ function checkAndUpdateData() {
     console.log("background-js countryData:", fetchedData.data);
     if(fetchedData.newDataLoaded){
       chrome.storage.local.set({ countryData: fetchedData.data }, function () {
-        console.log("chrome.storage.local countryData is set to " + fetchedData.data);
+        console.log("chrome.storage.local new countryData is set to",fetchedData.data);
       });
     } 
     return fetchedData;
